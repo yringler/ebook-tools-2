@@ -1,13 +1,15 @@
 import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
-import '../lib/html_converter.dart';
+import 'package:ebook_html_converter/html_converter.dart';
 
 void main(List<String> arguments) async {
   final parser = ArgParser()
     ..addOption('input', abbr: 'i', help: 'Input HTML file or directory')
-    ..addOption('output', abbr: 'o', help: 'Output directory for converted files')
-    ..addFlag('help', abbr: 'h', help: 'Show usage information', negatable: false);
+    ..addOption('output',
+        abbr: 'o', help: 'Output directory for converted files')
+    ..addFlag('help',
+        abbr: 'h', help: 'Show usage information', negatable: false);
 
   try {
     final results = parser.parse(arguments);
@@ -52,19 +54,22 @@ void main(List<String> arguments) async {
   }
 }
 
-Future<void> _convertFile(File inputFile, Directory outputDir, HtmlConverter converter) async {
+Future<void> _convertFile(
+    File inputFile, Directory outputDir, HtmlConverter converter) async {
   print('Converting: ${inputFile.path}');
 
   final content = await inputFile.readAsString();
   final converted = converter.convert(content);
 
-  final outputFile = File(path.join(outputDir.path, path.basename(inputFile.path)));
+  final outputFile =
+      File(path.join(outputDir.path, path.basename(inputFile.path)));
   await outputFile.writeAsString(converted);
 
   print('  -> ${outputFile.path}');
 }
 
-Future<void> _convertDirectory(Directory inputDir, Directory outputDir, HtmlConverter converter) async {
+Future<void> _convertDirectory(
+    Directory inputDir, Directory outputDir, HtmlConverter converter) async {
   print('Converting files in: ${inputDir.path}');
 
   await for (final entity in inputDir.list(recursive: true)) {
@@ -84,7 +89,8 @@ Future<void> _convertDirectory(Directory inputDir, Directory outputDir, HtmlConv
 }
 
 void _printUsage(ArgParser parser) {
-  print('Ebook HTML Converter - Convert HTML files for Calibre ebook conversion\n');
+  print(
+      'Ebook HTML Converter - Convert HTML files for Calibre ebook conversion\n');
   print('Usage: dart run ebook_html_converter -i <input> -o <output>\n');
   print(parser.usage);
   print('\nExamples:');
