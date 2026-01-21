@@ -1,0 +1,16 @@
+name: ebook_html_converter
+description: A Dart tool to convert source HTML into HTML files suitable for ebook conversion with Calibre
+version: 1.0.0
+repository: https://github.com/yourusername/ebook-html-converter
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  html: ^0.15.4
+  args: ^2.4.2
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
