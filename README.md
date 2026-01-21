@@ -6,14 +6,7 @@ A Dart toolkit for working with offline HTML ebooks, providing tools to navigate
 
 ### 1. BookNavigator
 
-Navigate through offline HTML book structures programmatically by following links based on heading or link text.
-
-**Key capabilities:**
-- Path-based navigation using text matching
-- Case-insensitive and whitespace-tolerant matching
-- Relative path resolution between HTML files
-- Link discovery and exploration
-- Comprehensive error handling
+Navigate through offline HTML book structures by following a path of strings that match headings or link text.
 
 **Example:**
 ```dart
@@ -22,8 +15,6 @@ import 'package:ebook_tools_2/book_navigator.dart';
 final navigator = BookNavigator('path/to/index.html');
 final document = await navigator.navigateTo(['Chapter 1', 'Section 1.2']);
 ```
-
-See [lib/book_navigator_README.md](lib/book_navigator_README.md) for detailed documentation.
 
 ### 2. HTML Converter
 
