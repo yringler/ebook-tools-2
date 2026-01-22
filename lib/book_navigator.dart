@@ -36,7 +36,8 @@ class BookNavigator {
       final nextHref = _findMatchingLink(currentDocument, pathSegment);
 
       if (nextHref == null) {
-        throw NavigationException('Could not find link matching "$pathSegment"');
+        throw NavigationException(
+            'Could not find link matching "$pathSegment"');
       }
 
       // Resolve the next file path relative to current file
