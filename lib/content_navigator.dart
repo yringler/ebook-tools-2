@@ -62,54 +62,60 @@ class ContentNavigator {
     final document = html_parser.parse(content);
 
     // Extract the nested table of contents from the beginning of the document
-    final tocItems = _extractBibleToc(document);
+    final tocItems = _extractNestedToc(document);
 
     return ContentNavigator(TableOfContents(tocItems));
   }
 
-  /// Extracts nested Bible TOC structure from HTML document
-  /// Structure: Parshiot (sections) > Chapters
-  static List<TableOfContentsItem> _extractBibleToc(Document document) {
+  /// Extracts nested TOC structure from HTML document
+  ///
+  /// Works for various Jewish text types (Bible, Talmud, Mishna, Chassidus, etc.)
+  /// Structure: Sections (L99 anchors) > Subsections (L2 anchors)
+  /// - Bible: Parshiot > Chapters
+  /// - Talmud: Tractates/Sections > Pages/Folios
+  /// - Mishna: Tractates > Chapters
+  /// - Other texts: Custom hierarchies following same anchor pattern
+  static List<TableOfContentsItem> _extractNestedToc(Document document) {
     final items = <TableOfContentsItem>[];
 
-    // Find all parsha sections - they have anchors ending with _L99
+    // Find all top-level sections - they have anchors ending with _L99
     // Pattern: <a name="HtmpReportNum####_L99"></a>
     final anchors = document.querySelectorAll('a[name]');
 
     for (final anchor in anchors) {
       final anchorName = anchor.attributes['name'] ?? '';
 
-      // Skip if not a parsha TOC anchor (must end with _L99)
+      // Skip if not a section TOC anchor (must end with _L99)
       if (!anchorName.endsWith('_L99')) continue;
 
-      // Find the link to the parsha content (next sibling or nearby)
+      // Find the link to the section content (next sibling or nearby)
       // Pattern: <a href="#HtmpReportNum####_L5">Title</a>
-      final parshaLink = _findNextLink(anchor);
-      if (parshaLink == null) continue;
+      final sectionLink = _findNextLink(anchor);
+      if (sectionLink == null) continue;
 
-      final parshaTitle = parshaLink.text.trim();
-      final parshaAnchor = parshaLink.attributes['href']?.substring(1) ?? '';
+      final sectionTitle = sectionLink.text.trim();
+      final sectionAnchor = sectionLink.attributes['href']?.substring(1) ?? '';
 
-      // Find the table with chapter links (should be next sibling structure)
+      // Find the table with subsection links (should be next sibling structure)
       final table = _findNextTable(anchor);
-      final chapters = <TableOfContentsItem>[];
+      final subsections = <TableOfContentsItem>[];
 
       if (table != null) {
-        // Extract chapter links from the table
-        final chapterLinks = table.querySelectorAll('a[href]');
-        for (final link in chapterLinks) {
+        // Extract subsection links from the table
+        final subsectionLinks = table.querySelectorAll('a[href]');
+        for (final link in subsectionLinks) {
           final href = link.attributes['href'] ?? '';
           if (href.startsWith('#') && href.contains('_L2')) {
-            final chapterTitle = link.text.trim();
-            final chapterAnchor = href.substring(1);
+            final subsectionTitle = link.text.trim();
+            final subsectionAnchor = href.substring(1);
 
-            // Create a ContentItem for each chapter
+            // Create a ContentItem for each subsection
             // (content will be extracted when needed)
-            chapters.add(ContentItem(
-              title: chapterTitle,
+            subsections.add(ContentItem(
+              title: subsectionTitle,
               section: ContentSection(
-                title: chapterTitle,
-                anchor: chapterAnchor,
+                title: subsectionTitle,
+                anchor: subsectionAnchor,
                 content: DocumentFragment(),
               ),
             ));
@@ -117,11 +123,11 @@ class ContentNavigator {
         }
       }
 
-      // Create a GroupItem for the parsha with its chapters
-      if (parshaTitle.isNotEmpty) {
+      // Create a GroupItem for the section with its subsections
+      if (sectionTitle.isNotEmpty) {
         items.add(GroupItem(
-          title: parshaTitle,
-          children: chapters,
+          title: sectionTitle,
+          children: subsections,
         ));
       }
     }

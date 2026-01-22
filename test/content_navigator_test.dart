@@ -7,7 +7,8 @@ void main() {
   group('ContentNavigator', () {
     final samplesDir = p.join(Directory.current.path, 'samples');
 
-    test('parses f_00760.html nested Bible TOC structure', () async {
+    test('parses nested TOC structure with sections and subsections', () async {
+      // f_00760.html is a Bible text (Genesis) with parshiot > chapters structure
       final navigator = await ContentNavigator.parse(
         p.join(samplesDir, 'f_00760.html'),
       );
@@ -15,64 +16,64 @@ void main() {
       final toc = navigator.tableOfContents;
       expect(toc.items, isNotEmpty);
 
-      // Check that we have GroupItems for parshiot
-      final parshiot = toc.items.whereType<GroupItem>().toList();
-      expect(parshiot, isNotEmpty);
+      // Check that we have GroupItems for top-level sections
+      final sections = toc.items.whereType<GroupItem>().toList();
+      expect(sections, isNotEmpty);
 
-      // The first item should be "פרשת בראשית" (Parshat Bereshit)
-      expect(parshiot[0].title, contains('בראשית'));
+      // The first section should be "פרשת בראשית" (Parshat Bereshit)
+      expect(sections[0].title, contains('בראשית'));
 
-      // It should have chapters as children
-      expect(parshiot[0].children, isNotEmpty);
+      // It should have subsections as children
+      expect(sections[0].children, isNotEmpty);
 
-      // Children should be ContentItems for chapters
-      final chapters = parshiot[0].children.whereType<ContentItem>().toList();
-      expect(chapters, isNotEmpty);
+      // Children should be ContentItems for subsections
+      final subsections = sections[0].children.whereType<ContentItem>().toList();
+      expect(subsections, isNotEmpty);
 
-      // First chapter should be "פרק-א" (Chapter 1)
-      expect(chapters[0].title, contains('פרק'));
+      // First subsection should be "פרק-א" (Chapter 1)
+      expect(subsections[0].title, contains('פרק'));
     });
 
-    test('extracts correct number of parshiot from Genesis', () async {
+    test('extracts correct number of sections from Genesis', () async {
       final navigator = await ContentNavigator.parse(
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final parshiot = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
 
-      // Genesis (Bereshit) has 12 parshiot
-      expect(parshiot.length, equals(12));
+      // Genesis (Bereshit) has 12 parshiot (weekly Torah portions)
+      expect(sections.length, equals(12));
     });
 
-    test('parshiot have correct chapter structure', () async {
+    test('sections have correct subsection structure', () async {
       final navigator = await ContentNavigator.parse(
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final parshiot = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
 
-      // First parsha (Bereshit) should have 6 chapters
-      expect(parshiot[0].children.length, equals(6));
+      // First section (Bereshit) should have 6 chapters
+      expect(sections[0].children.length, equals(6));
 
-      // Second parsha (Noach) should have 5 chapters
-      expect(parshiot[1].children.length, equals(5));
+      // Second section (Noach) should have 5 chapters
+      expect(sections[1].children.length, equals(5));
 
-      // Third parsha (Lech Lecha) should have 6 chapters
-      expect(parshiot[2].children.length, equals(6));
+      // Third section (Lech Lecha) should have 6 chapters
+      expect(sections[2].children.length, equals(6));
     });
 
-    test('chapters have correct anchors', () async {
+    test('subsections have correct anchor format', () async {
       final navigator = await ContentNavigator.parse(
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final parshiot = navigator.tableOfContents.items.whereType<GroupItem>().toList();
-      final firstParsha = parshiot[0];
-      final firstChapter = firstParsha.children.first as ContentItem;
+      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final firstSection = sections[0];
+      final firstSubsection = firstSection.children.first as ContentItem;
 
-      // Check that the anchor is in the correct format
-      expect(firstChapter.section.anchor, contains('HtmpReportNum'));
-      expect(firstChapter.section.anchor, contains('_L2'));
+      // Check that the anchor is in the correct format (L2 for subsections)
+      expect(firstSubsection.section.anchor, contains('HtmpReportNum'));
+      expect(firstSubsection.section.anchor, contains('_L2'));
     });
 
     test('handles empty or invalid files gracefully', () async {
