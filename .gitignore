@@ -1,6 +1,7 @@
 # The source HTML files, which have to be copied in to run.
 source
-
+# local claude settings
+settings.local.json
 # Files and directories created by pub
 .dart_tool/
 .packages
