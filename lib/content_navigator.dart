@@ -12,11 +12,41 @@ class ContentSection {
   });
 }
 
+/// A table of contents item - either a leaf pointing to content, or a group with children
+sealed class TableOfContentsItem {
+  String get title;
+}
+
+/// A leaf item that points to actual content
+class ContentItem extends TableOfContentsItem {
+  @override
+  final String title;
+  final ContentSection section;
+
+  ContentItem({required this.title, required this.section});
+}
+
+/// A group item that contains nested items
+class GroupItem extends TableOfContentsItem {
+  @override
+  final String title;
+  final List<TableOfContentsItem> children;
+
+  GroupItem({required this.title, required this.children});
+}
+
+/// Represents the full table of contents hierarchy
+class TableOfContents {
+  final List<TableOfContentsItem> items;
+
+  TableOfContents(this.items);
+}
+
 /// Parses and navigates actual book content files (book, book_start/mid/end, all_book)
 class ContentNavigator {
-  final List<ContentSection> sections;
+  final TableOfContents tableOfContents;
 
-  ContentNavigator(this.sections);
+  ContentNavigator(this.tableOfContents);
 
   /// Parses a content HTML file and extracts its sections
   static Future<ContentNavigator> parse(String filePath) async {
@@ -27,27 +57,9 @@ class ContentNavigator {
 
     // ignore: unused_local_variable
     final content = await file.readAsString();
-    final sections = <ContentSection>[];
 
-    // TODO: Parse content and extract sections
+    // TODO: Parse content and build table of contents
 
-    return ContentNavigator(sections);
-  }
-
-  /// Returns the table of contents (section titles)
-  List<String> get tableOfContents => sections.map((s) => s.title).toList();
-
-  /// Gets a section by index
-  ContentSection? getSection(int index) {
-    if (index < 0 || index >= sections.length) return null;
-    return sections[index];
-  }
-
-  /// Gets a section by title
-  ContentSection? getSectionByTitle(String title) {
-    for (final section in sections) {
-      if (section.title == title) return section;
-    }
-    return null;
+    return ContentNavigator(TableOfContents([]));
   }
 }
