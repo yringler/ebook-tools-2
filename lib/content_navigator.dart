@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:html/dom.dart';
+import 'package:html/parser.dart' as html_parser;
 
 /// Represents a section within a book's content
 class ContentSection {
   final String title;
+  final String anchor;
   final DocumentFragment content;
 
   ContentSection({
     required this.title,
+    required this.anchor,
     required this.content,
   });
 }
@@ -55,11 +58,122 @@ class ContentNavigator {
       throw FileSystemException('Content file not found', filePath);
     }
 
-    // ignore: unused_local_variable
     final content = await file.readAsString();
+    final document = html_parser.parse(content);
 
-    // TODO: Parse content and build table of contents
+    // Extract the nested table of contents from the beginning of the document
+    final tocItems = _extractBibleToc(document);
 
-    return ContentNavigator(TableOfContents([]));
+    return ContentNavigator(TableOfContents(tocItems));
+  }
+
+  /// Extracts nested Bible TOC structure from HTML document
+  /// Structure: Parshiot (sections) > Chapters
+  static List<TableOfContentsItem> _extractBibleToc(Document document) {
+    final items = <TableOfContentsItem>[];
+
+    // Find all parsha sections - they have anchors ending with _L99
+    // Pattern: <a name="HtmpReportNum####_L99"></a>
+    final anchors = document.querySelectorAll('a[name]');
+
+    for (final anchor in anchors) {
+      final anchorName = anchor.attributes['name'] ?? '';
+
+      // Skip if not a parsha TOC anchor (must end with _L99)
+      if (!anchorName.endsWith('_L99')) continue;
+
+      // Find the link to the parsha content (next sibling or nearby)
+      // Pattern: <a href="#HtmpReportNum####_L5">Title</a>
+      final parshaLink = _findNextLink(anchor);
+      if (parshaLink == null) continue;
+
+      final parshaTitle = parshaLink.text.trim();
+      final parshaAnchor = parshaLink.attributes['href']?.substring(1) ?? '';
+
+      // Find the table with chapter links (should be next sibling structure)
+      final table = _findNextTable(anchor);
+      final chapters = <TableOfContentsItem>[];
+
+      if (table != null) {
+        // Extract chapter links from the table
+        final chapterLinks = table.querySelectorAll('a[href]');
+        for (final link in chapterLinks) {
+          final href = link.attributes['href'] ?? '';
+          if (href.startsWith('#') && href.contains('_L2')) {
+            final chapterTitle = link.text.trim();
+            final chapterAnchor = href.substring(1);
+
+            // Create a ContentItem for each chapter
+            // (content will be extracted when needed)
+            chapters.add(ContentItem(
+              title: chapterTitle,
+              section: ContentSection(
+                title: chapterTitle,
+                anchor: chapterAnchor,
+                content: DocumentFragment(),
+              ),
+            ));
+          }
+        }
+      }
+
+      // Create a GroupItem for the parsha with its chapters
+      if (parshaTitle.isNotEmpty) {
+        items.add(GroupItem(
+          title: parshaTitle,
+          children: chapters,
+        ));
+      }
+    }
+
+    return items;
+  }
+
+  /// Find the next <a> link element after the given element
+  static Element? _findNextLink(Element element) {
+    var next = element.nextElementSibling;
+
+    // Search through next siblings
+    while (next != null) {
+      if (next.localName == 'a' && next.attributes.containsKey('href')) {
+        return next;
+      }
+      // Also check children of next element
+      final childLink = next.querySelector('a[href]');
+      if (childLink != null) return childLink;
+
+      next = next.nextElementSibling;
+
+      // Stop searching after a few siblings to avoid going too far
+      if (next?.localName == 'table' || next?.localName == 'hr') break;
+    }
+
+    return null;
+  }
+
+  /// Find the next <table> element after the given element
+  static Element? _findNextTable(Element element) {
+    var next = element.nextElementSibling;
+
+    // Search through next siblings
+    while (next != null) {
+      if (next.localName == 'table') {
+        return next;
+      }
+      // Also check children
+      final childTable = next.querySelector('table');
+      if (childTable != null) return childTable;
+
+      next = next.nextElementSibling;
+
+      // Stop searching after encountering another anchor (next section)
+      final nextAnchor = next?.querySelector('a[name]');
+      if (nextAnchor != null &&
+          (nextAnchor.attributes['name']?.endsWith('_L99') ?? false)) {
+        break;
+      }
+    }
+
+    return null;
   }
 }
