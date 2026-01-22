@@ -1,84 +1,87 @@
 import 'dart:io';
-import 'package:html/parser.dart' as parser;
-import 'package:html/dom.dart';
-import 'package:path/path.dart' as path;
 
-/// Exception thrown when navigation fails
-class NavigationException implements Exception {
-  final String message;
-  NavigationException(this.message);
-
-  @override
-  String toString() => 'NavigationException: $message';
+/// Types of items that can appear in an index
+enum IndexItemType {
+  folder,
+  book,
+  splitedBook,
+  bookStart,
+  bookMid,
+  bookEnd,
+  allBook,
 }
 
-/// Navigates through offline HTML book structure by following a path
-/// of strings that match headings or link text
-class BookNavigator {
-  final String rootIndexPath;
+/// Represents a single item in an index (table of contents)
+class IndexItem {
+  final String name;
+  final String path;
+  final IndexItemType type;
 
-  BookNavigator(this.rootIndexPath);
+  IndexItem({
+    required this.name,
+    required this.path,
+    required this.type,
+  });
 
-  /// Navigates through the book following the given path
-  ///
-  /// [path] - List of strings representing headings or link text to follow
-  ///
-  /// Returns the parsed HTML Document at the final destination
-  Future<Document> navigateTo(List<String> path) async {
-    String currentFilePath = rootIndexPath;
-    Document currentDocument = await _parseHtmlFile(currentFilePath);
+  @override
+  String toString() => 'IndexItem(name: $name, path: $path, type: $type)';
+}
 
-    for (final pathSegment in path) {
-      // TODO: Implement logic to find matching link/heading in currentDocument
-      // - Search through headings (h1-h6) for matching text
-      // - Search through links (<a> tags) for matching text
-      // - Determine the matching strategy (exact, partial, case-sensitive, etc.)
-      final nextHref = _findMatchingLink(currentDocument, pathSegment);
+/// Represents an index page containing a list of items
+class Index {
+  final List<IndexItem> items;
 
-      if (nextHref == null) {
-        throw NavigationException(
-            'Could not find link matching "$pathSegment"');
-      }
+  Index(this.items);
 
-      // Resolve the next file path relative to current file
-      currentFilePath = _resolveHtmlPath(currentFilePath, nextHref);
-      currentDocument = await _parseHtmlFile(currentFilePath);
-    }
-
-    return currentDocument;
-  }
-
-  /// Finds a link in the document that matches the target text
-  ///
-  /// Returns the href attribute if found, null otherwise
-  String? _findMatchingLink(Document document, String targetText) {
-    // TODO: Implement matching logic based on actual HTML structure
-    // Need to understand:
-    // - How are headings structured in the HTML?
-    // - Are links inside headings or separate?
-    // - What text matching strategy works best?
-    // - Should matching be case-sensitive?
-
-    return null;
-  }
-
-  /// Resolves an HTML file path relative to the current file
-  String _resolveHtmlPath(String currentFilePath, String href) {
-    // Remove fragment/query from href
-    final cleanHref = href.split('#').first.split('?').first;
-
-    final currentDir = path.dirname(currentFilePath);
-    return path.normalize(path.join(currentDir, cleanHref));
-  }
-
-  /// Parses an HTML file and returns the Document
-  Future<Document> _parseHtmlFile(String filePath) async {
+  /// Parses an HTML file and extracts index items from AddIndex() calls
+  static Future<Index> parse(String filePath) async {
     final file = File(filePath);
     if (!await file.exists()) {
       throw FileSystemException('HTML file not found', filePath);
     }
 
-    final htmlContent = await file.readAsString();
-    return parser.parse(htmlContent);
+    final content = await file.readAsString();
+    final items = <IndexItem>[];
+
+    // Match AddIndex("name", "path", "type") patterns
+    final regex = RegExp(r'AddIndex\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)');
+
+    for (final match in regex.allMatches(content)) {
+      final name = match.group(1)!;
+      final path = match.group(2)!;
+      final typeStr = match.group(3)!;
+
+      items.add(IndexItem(
+        name: name,
+        path: path,
+        type: _parseType(typeStr),
+      ));
+    }
+
+    return Index(items);
   }
+
+  static IndexItemType _parseType(String typeStr) {
+    switch (typeStr) {
+      case 'folder':
+        return IndexItemType.folder;
+      case 'book':
+        return IndexItemType.book;
+      case 'splited_book':
+        return IndexItemType.splitedBook;
+      case 'book_start':
+        return IndexItemType.bookStart;
+      case 'book_mid':
+        return IndexItemType.bookMid;
+      case 'book_end':
+        return IndexItemType.bookEnd;
+      case 'all_book':
+        return IndexItemType.allBook;
+      default:
+        throw ArgumentError('Unknown index item type: $typeStr');
+    }
+  }
+
+  @override
+  String toString() => 'Index(items: $items)';
 }
