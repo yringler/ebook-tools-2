@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(*)",
-      "Bash(powershell:*)",
-      "mcp__dart__run_tests"
-    ]
-  }
-}
