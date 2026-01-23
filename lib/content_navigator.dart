@@ -180,6 +180,12 @@ class ContentNavigator {
       }
     }
 
+    // The table may be a sibling of the parent element (e.g. anchor is inside a span)
+    final parent = element.parent;
+    if (parent != null && parent.localName != 'body') {
+      return _findNextTable(parent);
+    }
+
     return null;
   }
 }
