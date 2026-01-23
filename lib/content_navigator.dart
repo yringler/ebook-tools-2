@@ -94,7 +94,6 @@ class ContentNavigator {
       if (sectionLink == null) continue;
 
       final sectionTitle = sectionLink.text.trim();
-      final sectionAnchor = sectionLink.attributes['href']?.substring(1) ?? '';
 
       // Find the table with subsection links (should be next sibling structure)
       final table = _findNextTable(anchor);
