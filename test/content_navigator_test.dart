@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:html/dom.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
 import '../lib/content_navigator.dart';
@@ -27,7 +28,8 @@ void main() {
       expect(sections[0].children, isNotEmpty);
 
       // Children should be ContentItems for subsections
-      final subsections = sections[0].children.whereType<ContentItem>().toList();
+      final subsections =
+          sections[0].children.whereType<ContentItem>().toList();
       expect(subsections, isNotEmpty);
 
       // First subsection should be "פרק-א" (Chapter 1)
@@ -39,7 +41,8 @@ void main() {
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections =
+          navigator.tableOfContents.items.whereType<GroupItem>().toList();
 
       // Genesis (Bereshit) has 12 parshiot (weekly Torah portions)
       expect(sections.length, equals(12));
@@ -50,7 +53,8 @@ void main() {
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections =
+          navigator.tableOfContents.items.whereType<GroupItem>().toList();
 
       // First section (Bereshit) should have 6 chapters
       expect(sections[0].children.length, equals(6));
@@ -67,7 +71,8 @@ void main() {
         p.join(samplesDir, 'f_00760.html'),
       );
 
-      final sections = navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections =
+          navigator.tableOfContents.items.whereType<GroupItem>().toList();
       final firstSection = sections[0];
       final firstSubsection = firstSection.children.first as ContentItem;
 
