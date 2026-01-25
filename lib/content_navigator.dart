@@ -1,13 +1,16 @@
 import 'dart:io';
 import 'package:html/dom.dart';
+import 'package:html/parser.dart' as html_parser;
 
 /// Represents a section within a book's content
 class ContentSection {
   final String title;
+  final String anchor;
   final DocumentFragment content;
 
   ContentSection({
     required this.title,
+    required this.anchor,
     required this.content,
   });
 }
@@ -55,11 +58,127 @@ class ContentNavigator {
       throw FileSystemException('Content file not found', filePath);
     }
 
-    // ignore: unused_local_variable
     final content = await file.readAsString();
+    final document = html_parser.parse(content);
 
-    // TODO: Parse content and build table of contents
+    // Extract the nested table of contents from the beginning of the document
+    final tocItems = _extractNestedToc(document);
 
-    return ContentNavigator(TableOfContents([]));
+    return ContentNavigator(TableOfContents(tocItems));
+  }
+
+  /// Extracts nested TOC structure from HTML document
+  ///
+  /// Works for various Jewish text types (Bible, Talmud, Mishna, Chassidus, etc.)
+  /// Structure: Sections (L99 anchors) > Subsections (L2 anchors)
+  /// - Bible: Parshiot > Chapters
+  /// - Talmud: Tractates/Sections > Pages/Folios
+  /// - Mishna: Tractates > Chapters
+  /// - Other texts: Custom hierarchies following same anchor pattern
+  static List<TableOfContentsItem> _extractNestedToc(Document document) {
+    final items = <TableOfContentsItem>[];
+
+    // Find all top-level sections - they have anchors ending with _L99
+    // Pattern: <a name="HtmpReportNum####_L99"></a>
+    final anchors = document.querySelectorAll('a[name\$="_L99"]');
+
+    for (final anchor in anchors) {
+      // Find the link to the section content (next sibling or nearby)
+      // Pattern: <a href="#HtmpReportNum####_L5">Title</a>
+      final sectionLink = _findNextLink(anchor);
+      if (sectionLink == null) continue;
+
+      final sectionTitle = sectionLink.text.trim();
+
+      // Find the table with subsection links (should be next sibling structure)
+      final table = _findNextTable(anchor);
+      final subsections = <TableOfContentsItem>[];
+
+      if (table != null) {
+        // Extract subsection links from the table
+        final subsectionLinks =
+            table.querySelectorAll('a[href^="#"][href*="_L2"]');
+        for (final link in subsectionLinks) {
+          final href = link.attributes['href'] ?? '';
+          final subsectionTitle = link.text.trim();
+          final subsectionAnchor = href.substring(1);
+
+          // Create a ContentItem for each subsection
+          // (content will be extracted when needed)
+          subsections.add(ContentItem(
+            title: subsectionTitle,
+            section: ContentSection(
+              title: subsectionTitle,
+              anchor: subsectionAnchor,
+              content: DocumentFragment(),
+            ),
+          ));
+        }
+      }
+
+      // Create a GroupItem for the section with its subsections
+      if (sectionTitle.isNotEmpty) {
+        items.add(GroupItem(
+          title: sectionTitle,
+          children: subsections,
+        ));
+      }
+    }
+
+    return items;
+  }
+
+  /// Find the next <a> link element after the given element
+  static Element? _findNextLink(Element element) {
+    var next = element.nextElementSibling;
+
+    // Search through next siblings
+    while (next != null) {
+      if (next.localName == 'a' && next.attributes.containsKey('href')) {
+        return next;
+      }
+      // Also check children of next element
+      final childLink = next.querySelector('a[href]');
+      if (childLink != null) return childLink;
+
+      next = next.nextElementSibling;
+
+      // Stop searching after a few siblings to avoid going too far
+      if (next?.localName == 'table' || next?.localName == 'hr') break;
+    }
+
+    return null;
+  }
+
+  /// Find the next <table> element after the given element
+  static Element? _findNextTable(Element element) {
+    var next = element.nextElementSibling;
+
+    // Search through next siblings
+    while (next != null) {
+      if (next.localName == 'table') {
+        return next;
+      }
+      // Also check children
+      final childTable = next.querySelector('table');
+      if (childTable != null) return childTable;
+
+      next = next.nextElementSibling;
+
+      // Stop searching after encountering another anchor (next section)
+      final nextAnchor = next?.querySelector('a[name]');
+      if (nextAnchor != null &&
+          (nextAnchor.attributes['name']?.endsWith('_L99') ?? false)) {
+        break;
+      }
+    }
+
+    // The table may be a sibling of the parent element (e.g. anchor is inside a span)
+    final parent = element.parent;
+    if (parent != null && parent.localName != 'body') {
+      return _findNextTable(parent);
+    }
+
+    return null;
   }
 }

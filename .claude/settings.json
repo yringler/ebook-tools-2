@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dart test:*)"
+      "Bash(dart test:*)",
+      "mcp__dart__run_tests"
     ]
   }
 }
