@@ -80,14 +80,9 @@ class ContentNavigator {
 
     // Find all top-level sections - they have anchors ending with _L99
     // Pattern: <a name="HtmpReportNum####_L99"></a>
-    final anchors = document.querySelectorAll('a[name]');
+    final anchors = document.querySelectorAll('a[name\$="_L99"]');
 
     for (final anchor in anchors) {
-      final anchorName = anchor.attributes['name'] ?? '';
-
-      // Skip if not a section TOC anchor (must end with _L99)
-      if (!anchorName.endsWith('_L99')) continue;
-
       // Find the link to the section content (next sibling or nearby)
       // Pattern: <a href="#HtmpReportNum####_L5">Title</a>
       final sectionLink = _findNextLink(anchor);
@@ -101,24 +96,23 @@ class ContentNavigator {
 
       if (table != null) {
         // Extract subsection links from the table
-        final subsectionLinks = table.querySelectorAll('a[href]');
+        final subsectionLinks =
+            table.querySelectorAll('a[href^="#"][href*="_L2"]');
         for (final link in subsectionLinks) {
           final href = link.attributes['href'] ?? '';
-          if (href.startsWith('#') && href.contains('_L2')) {
-            final subsectionTitle = link.text.trim();
-            final subsectionAnchor = href.substring(1);
+          final subsectionTitle = link.text.trim();
+          final subsectionAnchor = href.substring(1);
 
-            // Create a ContentItem for each subsection
-            // (content will be extracted when needed)
-            subsections.add(ContentItem(
+          // Create a ContentItem for each subsection
+          // (content will be extracted when needed)
+          subsections.add(ContentItem(
+            title: subsectionTitle,
+            section: ContentSection(
               title: subsectionTitle,
-              section: ContentSection(
-                title: subsectionTitle,
-                anchor: subsectionAnchor,
-                content: DocumentFragment(),
-              ),
-            ));
-          }
+              anchor: subsectionAnchor,
+              content: DocumentFragment(),
+            ),
+          ));
         }
       }
 
