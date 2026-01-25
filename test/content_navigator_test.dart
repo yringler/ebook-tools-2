@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:html/dom.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
-import '../lib/content_navigator.dart';
+import 'package:ebook_html_converter/content_navigator.dart';
 
 void main() {
   group('ContentNavigator', () {

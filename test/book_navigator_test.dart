@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
-import '../lib/book_navigator.dart';
+import 'package:ebook_html_converter/book_navigator.dart';
 
 void main() {
   group('IndexItem', () {
@@ -90,15 +90,17 @@ void main() {
       final index = await Index.parse(file.path);
 
       expect(index.items, hasLength(7));
-      expect(index.items.map((i) => i.type).toList(), equals([
-        IndexItemType.folder,
-        IndexItemType.book,
-        IndexItemType.splitedBook,
-        IndexItemType.bookStart,
-        IndexItemType.bookMid,
-        IndexItemType.bookEnd,
-        IndexItemType.allBook,
-      ]));
+      expect(
+          index.items.map((i) => i.type).toList(),
+          equals([
+            IndexItemType.folder,
+            IndexItemType.book,
+            IndexItemType.splitedBook,
+            IndexItemType.bookStart,
+            IndexItemType.bookMid,
+            IndexItemType.bookEnd,
+            IndexItemType.allBook,
+          ]));
     });
 
     test('handles whitespace variations in AddIndex calls', () async {
@@ -132,7 +134,8 @@ void main() {
 
     test('throws ArgumentError for unknown type', () async {
       final file = File(p.join(tempDir.path, 'test.html'));
-      await file.writeAsString('AddIndex("test", "test.html", "unknown_type");');
+      await file
+          .writeAsString('AddIndex("test", "test.html", "unknown_type");');
 
       expect(
         () => Index.parse(file.path),
