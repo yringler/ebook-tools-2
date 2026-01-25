@@ -10,7 +10,7 @@ Navigate through offline HTML book structures by following a path of strings tha
 
 **Example:**
 ```dart
-import 'package:ebook_tools_2/book_navigator.dart';
+import 'package:ebook_tools_2/library_index_parser.dart';
 
 final navigator = BookNavigator('path/to/index.html');
 final document = await navigator.navigateTo(['Chapter 1', 'Section 1.2']);
@@ -36,7 +36,7 @@ dart run bin/ebook_html_converter.dart -i input.html -o output/
 
 Use the BookNavigator in your code:
 ```dart
-import 'package:ebook_tools_2/book_navigator.dart';
+import 'package:ebook_tools_2/library_index_parser.dart';
 
 final navigator = BookNavigator('book/index.html');
 final doc = await navigator.navigateTo(['Chapter 1']);

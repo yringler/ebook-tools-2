@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:ebook_html_converter/book_navigator.dart';
+import 'package:ebook_html_converter/library_index_parser.dart';
 
 void main() {
   group('IndexItem', () {
