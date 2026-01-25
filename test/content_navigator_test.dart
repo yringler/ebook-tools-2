@@ -1,8 +1,10 @@
 import 'dart:io';
-import 'package:html/dom.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
 import 'package:ebook_html_converter/content_navigator.dart';
+import 'package:ebook_html_converter/book_content_navigation.dart';
+import 'package:ebook_html_converter/table_of_contents.dart';
 
 void main() {
   group('ContentNavigator', () {
@@ -10,11 +12,12 @@ void main() {
 
     test('parses nested TOC structure with sections and subsections', () async {
       // f_00760.html is a Bible text (Genesis) with parshiot > chapters structure
-      final navigator = await ContentNavigator.parse(
-        p.join(samplesDir, 'f_00760.html'),
-      );
-
-      final toc = navigator.tableOfContents;
+      final file = File(p.join(samplesDir, 'f_00760.html'));
+      final content = await file.readAsString();
+      final document = html_parser.parse(content);
+      final bookNav = BookContentNavigation(document);
+      final toc = bookNav.extractTableOfContents();
+      final navigator = ContentNavigator(toc);
       expect(toc.items, isNotEmpty);
 
       // Check that we have GroupItems for top-level sections
@@ -37,24 +40,26 @@ void main() {
     });
 
     test('extracts correct number of sections from Genesis', () async {
-      final navigator = await ContentNavigator.parse(
-        p.join(samplesDir, 'f_00760.html'),
-      );
+      final file = File(p.join(samplesDir, 'f_00760.html'));
+      final content = await file.readAsString();
+      final document = html_parser.parse(content);
+      final bookNav = BookContentNavigation(document);
+      final toc = bookNav.extractTableOfContents();
 
-      final sections =
-          navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections = toc.items.whereType<GroupItem>().toList();
 
       // Genesis (Bereshit) has 12 parshiot (weekly Torah portions)
       expect(sections.length, equals(12));
     });
 
     test('sections have correct subsection structure', () async {
-      final navigator = await ContentNavigator.parse(
-        p.join(samplesDir, 'f_00760.html'),
-      );
+      final file = File(p.join(samplesDir, 'f_00760.html'));
+      final content = await file.readAsString();
+      final document = html_parser.parse(content);
+      final bookNav = BookContentNavigation(document);
+      final toc = bookNav.extractTableOfContents();
 
-      final sections =
-          navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections = toc.items.whereType<GroupItem>().toList();
 
       // First section (Bereshit) should have 6 chapters
       expect(sections[0].children.length, equals(6));
@@ -67,12 +72,13 @@ void main() {
     });
 
     test('subsections have correct anchor format', () async {
-      final navigator = await ContentNavigator.parse(
-        p.join(samplesDir, 'f_00760.html'),
-      );
+      final file = File(p.join(samplesDir, 'f_00760.html'));
+      final content = await file.readAsString();
+      final document = html_parser.parse(content);
+      final bookNav = BookContentNavigation(document);
+      final toc = bookNav.extractTableOfContents();
 
-      final sections =
-          navigator.tableOfContents.items.whereType<GroupItem>().toList();
+      final sections = toc.items.whereType<GroupItem>().toList();
       final firstSection = sections[0];
       final firstSubsection = firstSection.children.first as ContentItem;
 
@@ -88,18 +94,22 @@ void main() {
         final file = File(p.join(tempDir.path, 'empty.html'));
         await file.writeAsString('<html><body></body></html>');
 
-        final navigator = await ContentNavigator.parse(file.path);
+        final content = await file.readAsString();
+        final document = html_parser.parse(content);
+        final bookNav = BookContentNavigation(document);
+        final toc = bookNav.extractTableOfContents();
 
         // Should return empty TOC for files without the expected structure
-        expect(navigator.tableOfContents.items, isEmpty);
+        expect(toc.items, isEmpty);
       } finally {
         await tempDir.delete(recursive: true);
       }
     });
 
     test('throws FileSystemException for non-existent file', () async {
+      final file = File('/nonexistent/file.html');
       expect(
-        () => ContentNavigator.parse('/nonexistent/file.html'),
+        () async => await file.readAsString(),
         throwsA(isA<FileSystemException>()),
       );
     });
@@ -112,7 +122,6 @@ void main() {
         section: ContentSection(
           title: 'Chapter 1',
           anchor: 'chapter1',
-          content: DocumentFragment(),
         ),
       );
 
@@ -132,7 +141,6 @@ void main() {
         section: ContentSection(
           title: 'Section',
           anchor: 'section',
-          content: DocumentFragment(),
         ),
       );
 
