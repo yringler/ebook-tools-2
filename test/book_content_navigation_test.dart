@@ -2,84 +2,64 @@ import 'dart:io';
 import 'package:html/parser.dart' as html_parser;
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:ebook_html_converter/content_navigator.dart';
-import 'package:ebook_html_converter/book_content_navigation.dart';
+import 'package:ebook_html_converter/book_table_of_contents_parser.dart';
 import 'package:ebook_html_converter/table_of_contents.dart';
 
 void main() {
-  group('ContentNavigator', () {
+  group('BookTableOfContentsParser', () {
     final samplesDir = p.join(Directory.current.path, 'samples');
+    late TableOfContents genesisToc;
+    late List<GroupItem> genesisSections;
 
-    test('parses nested TOC structure with sections and subsections', () async {
+    setUpAll(() async {
       // f_00760.html is a Bible text (Genesis) with parshiot > chapters structure
       final file = File(p.join(samplesDir, 'f_00760.html'));
       final content = await file.readAsString();
       final document = html_parser.parse(content);
-      final bookNav = BookContentNavigation(document);
-      final toc = bookNav.extractTableOfContents();
-      final navigator = ContentNavigator(toc);
-      expect(toc.items, isNotEmpty);
+      final bookNav = BookTableOfContentsParser(document);
+      genesisToc = bookNav.extractTableOfContents();
+      genesisSections = genesisToc.items.whereType<GroupItem>().toList();
+    });
+
+    test('parses nested TOC structure with sections and subsections', () {
+      expect(genesisToc.items, isNotEmpty);
 
       // Check that we have GroupItems for top-level sections
-      final sections = toc.items.whereType<GroupItem>().toList();
-      expect(sections, isNotEmpty);
+      expect(genesisSections, isNotEmpty);
 
       // The first section should be "פרשת בראשית" (Parshat Bereshit)
-      expect(sections[0].title, contains('בראשית'));
+      expect(genesisSections[0].title, contains('בראשית'));
 
       // It should have subsections as children
-      expect(sections[0].children, isNotEmpty);
+      expect(genesisSections[0].children, isNotEmpty);
 
       // Children should be ContentItems for subsections
       final subsections =
-          sections[0].children.whereType<ContentItem>().toList();
+          genesisSections[0].children.whereType<ContentItem>().toList();
       expect(subsections, isNotEmpty);
 
       // First subsection should be "פרק-א" (Chapter 1)
       expect(subsections[0].title, contains('פרק'));
     });
 
-    test('extracts correct number of sections from Genesis', () async {
-      final file = File(p.join(samplesDir, 'f_00760.html'));
-      final content = await file.readAsString();
-      final document = html_parser.parse(content);
-      final bookNav = BookContentNavigation(document);
-      final toc = bookNav.extractTableOfContents();
-
-      final sections = toc.items.whereType<GroupItem>().toList();
-
+    test('extracts correct number of sections from Genesis', () {
       // Genesis (Bereshit) has 12 parshiot (weekly Torah portions)
-      expect(sections.length, equals(12));
+      expect(genesisSections.length, equals(12));
     });
 
-    test('sections have correct subsection structure', () async {
-      final file = File(p.join(samplesDir, 'f_00760.html'));
-      final content = await file.readAsString();
-      final document = html_parser.parse(content);
-      final bookNav = BookContentNavigation(document);
-      final toc = bookNav.extractTableOfContents();
-
-      final sections = toc.items.whereType<GroupItem>().toList();
-
+    test('sections have correct subsection structure', () {
       // First section (Bereshit) should have 6 chapters
-      expect(sections[0].children.length, equals(6));
+      expect(genesisSections[0].children.length, equals(6));
 
       // Second section (Noach) should have 5 chapters
-      expect(sections[1].children.length, equals(5));
+      expect(genesisSections[1].children.length, equals(5));
 
       // Third section (Lech Lecha) should have 6 chapters
-      expect(sections[2].children.length, equals(6));
+      expect(genesisSections[2].children.length, equals(6));
     });
 
-    test('subsections have correct anchor format', () async {
-      final file = File(p.join(samplesDir, 'f_00760.html'));
-      final content = await file.readAsString();
-      final document = html_parser.parse(content);
-      final bookNav = BookContentNavigation(document);
-      final toc = bookNav.extractTableOfContents();
-
-      final sections = toc.items.whereType<GroupItem>().toList();
-      final firstSection = sections[0];
+    test('subsections have correct anchor format', () {
+      final firstSection = genesisSections[0];
       final firstSubsection = firstSection.children.first as ContentItem;
 
       // Check that the anchor is in the correct format (L2 for subsections)
@@ -96,7 +76,7 @@ void main() {
 
         final content = await file.readAsString();
         final document = html_parser.parse(content);
-        final bookNav = BookContentNavigation(document);
+        final bookNav = BookTableOfContentsParser(document);
         final toc = bookNav.extractTableOfContents();
 
         // Should return empty TOC for files without the expected structure
@@ -104,14 +84,6 @@ void main() {
       } finally {
         await tempDir.delete(recursive: true);
       }
-    });
-
-    test('throws FileSystemException for non-existent file', () async {
-      final file = File('/nonexistent/file.html');
-      expect(
-        () async => await file.readAsString(),
-        throwsA(isA<FileSystemException>()),
-      );
     });
   });
 

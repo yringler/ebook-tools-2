@@ -2,10 +2,10 @@ import 'package:html/dom.dart';
 import 'table_of_contents.dart';
 
 /// Extracts and builds the complete table of contents from book HTML content
-class BookContentNavigation {
+class BookTableOfContentsParser {
   final Document document;
 
-  BookContentNavigation(this.document);
+  BookTableOfContentsParser(this.document);
 
   /// Extracts nested TOC structure from HTML document
   ///
