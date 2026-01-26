@@ -30,11 +30,13 @@ void main() {
     });
   });
 
-  group('Index.parse', () {
+  group('LibraryIndexParser.parse', () {
     late Directory tempDir;
+    late LibraryIndexParser parser;
 
     setUp(() async {
       tempDir = await Directory.systemTemp.createTemp('index_test_');
+      parser = LibraryIndexParser();
     });
 
     tearDown(() async {
@@ -49,7 +51,7 @@ void main() {
         </script>
       ''');
 
-      final index = await Index.parse(file.path);
+      final index = await parser.parse(file.path);
 
       expect(index.items, hasLength(1));
       expect(index.items[0].name, equals('תורה'));
@@ -67,7 +69,7 @@ void main() {
         </script>
       ''');
 
-      final index = await Index.parse(file.path);
+      final index = await parser.parse(file.path);
 
       expect(index.items, hasLength(3));
       expect(index.items[0].type, equals(IndexItemType.folder));
@@ -87,7 +89,7 @@ void main() {
         AddIndex("g", "g.html", "all_book");
       ''');
 
-      final index = await Index.parse(file.path);
+      final index = await parser.parse(file.path);
 
       expect(index.items, hasLength(7));
       expect(
@@ -111,7 +113,7 @@ void main() {
         AddIndex(  "c"  ,  "c.html"  ,  "splited_book"  );
       ''');
 
-      final index = await Index.parse(file.path);
+      final index = await parser.parse(file.path);
 
       expect(index.items, hasLength(3));
     });
@@ -120,14 +122,14 @@ void main() {
       final file = File(p.join(tempDir.path, 'test.html'));
       await file.writeAsString('<html><body>No index here</body></html>');
 
-      final index = await Index.parse(file.path);
+      final index = await parser.parse(file.path);
 
       expect(index.items, isEmpty);
     });
 
     test('throws FileSystemException for non-existent file', () async {
       expect(
-        () => Index.parse(p.join(tempDir.path, 'nonexistent.html')),
+        () => parser.parse(p.join(tempDir.path, 'nonexistent.html')),
         throwsA(isA<FileSystemException>()),
       );
     });
@@ -138,17 +140,22 @@ void main() {
           .writeAsString('AddIndex("test", "test.html", "unknown_type");');
 
       expect(
-        () => Index.parse(file.path),
+        () => parser.parse(file.path),
         throwsA(isA<ArgumentError>()),
       );
     });
   });
 
-  group('Index.parse with real sample files', () {
+  group('LibraryIndexParser.parse with real sample files', () {
     final samplesDir = p.join(Directory.current.path, 'samples');
+    late LibraryIndexParser parser;
+
+    setUp(() {
+      parser = LibraryIndexParser();
+    });
 
     test('parses a_root.html (root index)', () async {
-      final index = await Index.parse(p.join(samplesDir, 'a_root.html'));
+      final index = await parser.parse(p.join(samplesDir, 'a_root.html'));
 
       expect(index.items, isNotEmpty);
       // Root should contain folder items
@@ -159,7 +166,7 @@ void main() {
     });
 
     test('parses d_root__001_tora.html (nested folder index)', () async {
-      final index = await Index.parse(
+      final index = await parser.parse(
         p.join(samplesDir, 'd_root__001_tora.html'),
       );
 
@@ -167,7 +174,7 @@ void main() {
     });
 
     test('parses d_root__001_tora__01_bereshit.html (book index)', () async {
-      final index = await Index.parse(
+      final index = await parser.parse(
         p.join(samplesDir, 'd_root__001_tora__01_bereshit.html'),
       );
 
@@ -183,7 +190,7 @@ void main() {
 
     test('content pages (f_*.html) have no index items', () async {
       // f_01683_part_1.html is a content page, not an index
-      final index = await Index.parse(
+      final index = await parser.parse(
         p.join(samplesDir, 'f_01683_part_1.html'),
       );
 

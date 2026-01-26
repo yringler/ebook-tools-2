@@ -33,8 +33,14 @@ class Index {
 
   Index(this.items);
 
+  @override
+  String toString() => 'Index(items: $items)';
+}
+
+/// Parser for library index HTML files
+class LibraryIndexParser {
   /// Parses an HTML file and extracts index items from AddIndex() calls
-  static Future<Index> parse(String filePath) async {
+  Future<Index> parse(String filePath) async {
     final file = File(filePath);
     if (!await file.exists()) {
       throw FileSystemException('HTML file not found', filePath);
@@ -61,7 +67,7 @@ class Index {
     return Index(items);
   }
 
-  static IndexItemType _parseType(String typeStr) {
+  IndexItemType _parseType(String typeStr) {
     switch (typeStr) {
       case 'folder':
         return IndexItemType.folder;
@@ -81,7 +87,4 @@ class Index {
         throw ArgumentError('Unknown index item type: $typeStr');
     }
   }
-
-  @override
-  String toString() => 'Index(items: $items)';
 }

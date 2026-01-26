@@ -32,7 +32,7 @@ class GroupItem extends TableOfContentsItem {
   GroupItem({required this.title, required this.children});
 }
 
-/// Represents the full table of contents hierarchy
+/// Represents the full table of contents hierarchy for a book.
 class TableOfContents {
   final List<TableOfContentsItem> items;
 
