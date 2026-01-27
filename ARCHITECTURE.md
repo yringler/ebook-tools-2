@@ -13,8 +13,8 @@ Process a hierarchical HTML library into individual ebook-ready folders. Each bo
 
 ### 1. Navigation & Discovery Layer
 
-#### FileSystem (Interface)
-**Purpose**: Abstract file system operations for testing
+#### `FileSystem` (Interface)
+**Purpose**: Abstract file system operations for testing  
 **Responsibilities**:
 - Read file contents
 - Check file existence
@@ -27,17 +27,17 @@ Future<bool> fileExists(String path);
 String resolvePath(String base, String relative);
 ```
 
-#### RealFileSystem
-**Purpose**: Production implementation of FileSystem
+#### `RealFileSystem`
+**Purpose**: Production implementation of FileSystem  
 **Dependencies**: `dart:io`
 
-#### LibraryIndexParser (EXISTS)
-**Purpose**: Parse index/folder HTML pages to extract navigation items
-**Input**: `Document` (from html package)
-**Output**: `Index` containing list of `IndexItem`
+#### `LibraryIndexParser` (EXISTS)
+**Purpose**: Parse index/folder HTML pages to extract navigation items  
+**Input**: `Document` (from html package)  
+**Output**: `Index` containing list of `IndexItem`  
 **Location**: `lib/library_index_parser.dart`
 
-#### IndexFileReader
+#### `IndexFileReader`
 **Purpose**: Load and parse an index HTML file
 **Dependencies**: `FileSystem` (constructor), `LibraryIndexParser` (constructor)
 **Responsibilities**:
@@ -56,10 +56,10 @@ IndexFileReader(this.fileSystem, this.parser);
 Future<Index> readIndex(String filePath);
 ```
 
-#### PathResolver
-**Purpose**: Build absolute file paths from relative references
-**Note**: Thin wrapper around `path` package for consistent path resolution
-**Dependencies**: `FileSystem` (constructor)
+#### `PathResolver`
+**Purpose**: Build absolute file paths from relative references  
+**Note**: Thin wrapper around `path` package for consistent path resolution  
+**Dependencies**: `FileSystem` (constructor)  
 **Responsibilities**:
 - Resolve relative paths from current file location (wraps `path.join(path.dirname(base), relative)`)
 - Normalize path separators
@@ -76,9 +76,9 @@ String resolve(String basePath, String relativePath);
 Future<String> validateAndResolve(String basePath, String relativePath);
 ```
 
-#### HierarchyNavigator
-**Purpose**: Walk through folder→folder→book hierarchy
-**Dependencies**: `IndexFileReader` (constructor), `PathResolver` (constructor)
+#### `HierarchyNavigator`
+**Purpose**: Walk through folder→folder→book hierarchy  
+**Dependencies**: `IndexFileReader` (constructor), `PathResolver` (constructor)  
 **Responsibilities**:
 - Start from root index
 - Recursively follow folder links
