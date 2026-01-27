@@ -134,7 +134,7 @@ String generate(TableOfContents toc, BookReference book);
 
 #### ContentSectionExtractor
 **Purpose**: Extract HTML content between specific anchors
-**Input**: `Document`, anchor name
+**Dependencies**: None (stateless utility)
 **Responsibilities**:
 - Find content between L2/L5/L99 anchors
 - Extract complete HTML elements
@@ -148,6 +148,7 @@ Element? extractSectionRange(Document doc, String startAnchor, String endAnchor)
 
 #### SectionFileMapper
 **Purpose**: Map TOC sections to output filenames
+**Dependencies**: None (stateless utility)
 **Responsibilities**:
 - Generate unique filenames from ContentItem sections
 - Use anchor names or sanitized titles for filenames
@@ -165,7 +166,7 @@ Map<ContentItem, String> mapAllSections(TableOfContents toc);
 // OR sanitized title: "perek_aleph.html"
 ```
 
-### 4. Content Processing Layer
+### 3. Content Processing Layer
 
 #### SectionSplitter
 **Purpose**: Split book HTML into separate files per section
@@ -189,6 +190,7 @@ Map<String, Element> splitIntoSections(Document doc, TableOfContents toc);
 
 #### HtmlCleaner
 **Purpose**: Remove unwanted elements from HTML
+**Dependencies**: None (stateless utility)
 **Responsibilities**:
 - Remove `<script>` tags
 - Remove navigation elements
@@ -203,6 +205,7 @@ Element cleanElement(Element element);
 
 #### StyleNormalizer
 **Purpose**: Standardize inline styles for Calibre compatibility
+**Dependencies**: None (stateless utility)
 **Responsibilities**:
 - Convert inline styles to consistent format
 - Remove unsupported CSS
@@ -216,18 +219,23 @@ String normalizeStyleAttribute(String style);
 
 #### AnchorRewriter
 **Purpose**: Update anchor hrefs when splitting into multiple files
-**Dependencies**: Knowledge of new file structure
+**Dependencies**: `SectionFileMapper` (constructor)
 **Responsibilities**:
 - Rewrite internal `href="#anchor"` to `file.html#anchor`
 - Update TOC links to point to correct files
 - Preserve external links
 
-**Methods**:
+**Constructor**:
 ```dart
-Document rewriteAnchors(Document doc, Map<String, String> anchorToFile);
+AnchorRewriter(this.fileMapper);
 ```
 
-### 5. Output Layer
+**Methods**:
+```dart
+Document rewriteAnchors(Document doc, TableOfContents toc);
+```
+
+### 4. Output Layer
 
 #### BookFolderOrganizer
 **Purpose**: Create and manage output folder structure
@@ -263,11 +271,16 @@ output/
 
 #### FileWriter
 **Purpose**: Write processed HTML files to disk
-**Dependencies**: `FileSystem`
+**Dependencies**: `FileSystem` (constructor)
 **Responsibilities**:
 - Write HTML documents to files
 - Ensure proper encoding (UTF-8 for output)
 - Create parent directories as needed
+
+**Constructor**:
+```dart
+FileWriter(this.fileSystem);
+```
 
 **Methods**:
 ```dart
@@ -275,17 +288,42 @@ Future<void> writeHtml(String path, Document doc);
 Future<void> writeString(String path, String content);
 ```
 
-### 6. Orchestration
+### 5. Orchestration
 
 #### BookProcessor
 **Purpose**: Coordinate the complete workflow for a single book
-**Dependencies**: All processing layer classes
+**Dependencies**:
+- `FileSystem` (constructor)
+- `BookTableOfContentsParser` (constructor)
+- `SectionSplitter` (constructor)
+- `HtmlCleaner` (constructor)
+- `StyleNormalizer` (constructor)
+- `AnchorRewriter` (constructor)
+- `BookFolderOrganizer` (constructor)
+- `TocHtmlGenerator` (constructor)
+- `FileWriter` (constructor)
+
 **Responsibilities**:
 - Load book HTML
 - Extract TOC
 - Split into sections
 - Clean and normalize HTML
 - Generate output files
+
+**Constructor**:
+```dart
+BookProcessor(
+  this.fileSystem,
+  this.tocParser,
+  this.splitter,
+  this.cleaner,
+  this.styleNormalizer,
+  this.anchorRewriter,
+  this.folderOrganizer,
+  this.tocGenerator,
+  this.fileWriter,
+);
+```
 
 **Methods**:
 ```dart
@@ -306,12 +344,17 @@ Future<void> processBook(BookReference book, String outputRoot);
 
 #### LibraryProcessor
 **Purpose**: Process entire library hierarchy
-**Dependencies**: `HierarchyNavigator`, `BookProcessor`
+**Dependencies**: `HierarchyNavigator` (constructor), `BookProcessor` (constructor)
 **Responsibilities**:
 - Discover all books in library
 - Process each book
 - Handle errors gracefully
 - Report progress
+
+**Constructor**:
+```dart
+LibraryProcessor(this.navigator, this.bookProcessor);
+```
 
 **Methods**:
 ```dart
@@ -342,30 +385,30 @@ Future<void> processLibrary(String rootPath, String outputRoot);
 **Output**: Can discover all books in library with metadata (title, type, breadcrumbs)
 
 ### Phase 2: Content Extraction
-6. SectionFileMapper
-7. ContentSectionExtractor
-8. SectionSplitter
+5. SectionFileMapper
+6. ContentSectionExtractor
+7. SectionSplitter
 
 **Output**: Can split a book into section pieces
 
 ### Phase 3: Content Processing
-9. HtmlCleaner
-10. StyleNormalizer
-11. AnchorRewriter
+8. HtmlCleaner
+9. StyleNormalizer
+10. AnchorRewriter
 
 **Output**: Clean, normalized HTML ready for Calibre
 
 ### Phase 4: Output Generation
-12. TocHtmlGenerator
-13. BookFolderOrganizer
-14. FileWriter
+11. TocHtmlGenerator
+12. BookFolderOrganizer
+13. FileWriter
 
 **Output**: Can write processed books to disk
 
 ### Phase 5: Orchestration
-15. BookProcessor
-16. LibraryProcessor
-17. Update main CLI to use new architecture
+14. BookProcessor
+15. LibraryProcessor
+16. Update main CLI to use new architecture
 
 **Output**: Complete working system
 
