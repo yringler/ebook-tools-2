@@ -116,11 +116,16 @@ class BookReference {
 
 #### TocHtmlGenerator
 **Purpose**: Create clean index.html with TOC for Calibre
-**Input**: `TableOfContents`, `BookReference`
+**Dependencies**: `SectionFileMapper` (constructor)
 **Responsibilities**:
 - Generate clean HTML structure
-- Create links to section files
+- Create links to section files (using SectionFileMapper)
 - Apply minimal, ebook-friendly styling
+
+**Constructor**:
+```dart
+TocHtmlGenerator(this.fileMapper);
+```
 
 **Methods**:
 ```dart
@@ -141,22 +146,46 @@ Element? extractSection(Document doc, String anchorName);
 Element? extractSectionRange(Document doc, String startAnchor, String endAnchor);
 ```
 
+#### SectionFileMapper
+**Purpose**: Map TOC sections to output filenames
+**Responsibilities**:
+- Generate unique filenames from ContentItem sections
+- Use anchor names or sanitized titles for filenames
+- Provide consistent mapping for both splitting and TOC generation
+
+**Methods**:
+```dart
+String getFilenameForSection(ContentItem item);
+Map<ContentItem, String> mapAllSections(TableOfContents toc);
+```
+
+**Example**:
+```dart
+// Uses anchor: "HtmpReportNum0000_L2.html"
+// OR sanitized title: "perek_aleph.html"
+```
+
 ### 4. Content Processing Layer
 
 #### SectionSplitter
 **Purpose**: Split book HTML into separate files per section
-**Dependencies**: `ContentSectionExtractor`, `TableOfContents`
+**Dependencies**: `ContentSectionExtractor` (constructor), `SectionFileMapper` (constructor)
 **Responsibilities**:
-- Create one file per chapter/section
-- Determine file names from TOC structure
+- Create one Element per chapter/section
+- Use SectionFileMapper for consistent filenames
 - Coordinate section extraction
+
+**Constructor**:
+```dart
+SectionSplitter(this.extractor, this.fileMapper);
+```
 
 **Methods**:
 ```dart
 Map<String, Element> splitIntoSections(Document doc, TableOfContents toc);
 ```
 
-**Output**: Map of filename → HTML content
+**Output**: Map of filename → HTML Element
 
 #### HtmlCleaner
 **Purpose**: Remove unwanted elements from HTML
@@ -205,8 +234,8 @@ Document rewriteAnchors(Document doc, Map<String, String> anchorToFile);
 **Dependencies**: `FileSystem` (constructor)
 **Responsibilities**:
 - Create nested folder structure from breadcrumbs (e.g., output/תורה/בראשית/בראשית/)
-- Determine file names for sections
 - Handle path collisions
+- Sanitize folder names for filesystem compatibility
 
 **Constructor**:
 ```dart
@@ -216,7 +245,6 @@ BookFolderOrganizer(this.fileSystem);
 **Methods**:
 ```dart
 Future<String> createBookFolder(String outputRoot, BookReference book);
-String getSectionFilename(TableOfContentsItem item, int index);
 ```
 
 **Example Output Structure**:
@@ -326,29 +354,30 @@ Future<void> processLibrary(String rootPath, String outputRoot);
 **Output**: Can discover all books in library with metadata (title, type, breadcrumbs)
 
 ### Phase 2: Content Extraction
-6. ContentSectionExtractor
-7. SectionSplitter
+6. SectionFileMapper
+7. ContentSectionExtractor
+8. SectionSplitter
 
 **Output**: Can split a book into section pieces
 
 ### Phase 3: Content Processing
-8. HtmlCleaner
-9. StyleNormalizer
-10. AnchorRewriter
+9. HtmlCleaner
+10. StyleNormalizer
+11. AnchorRewriter
 
 **Output**: Clean, normalized HTML ready for Calibre
 
 ### Phase 4: Output Generation
-11. TocHtmlGenerator
-12. BookFolderOrganizer
-13. FileWriter
+12. TocHtmlGenerator
+13. BookFolderOrganizer
+14. FileWriter
 
 **Output**: Can write processed books to disk
 
 ### Phase 5: Orchestration
-14. BookProcessor
-15. LibraryProcessor
-16. Update main CLI to use new architecture
+15. BookProcessor
+16. LibraryProcessor
+17. Update main CLI to use new architecture
 
 **Output**: Complete working system
 
