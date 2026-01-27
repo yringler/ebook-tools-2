@@ -244,8 +244,9 @@ BookFolderOrganizer(this.fileSystem);
 
 **Methods**:
 ```dart
-Future<String> createBookFolder(String outputRoot, BookReference book);
+Future<Directory> createBookFolder(String outputRoot, BookReference book);
 ```
+- Returns the created Directory for use in subsequent file writes
 
 **Example Output Structure**:
 ```
@@ -272,19 +273,6 @@ output/
 ```dart
 Future<void> writeHtml(String path, Document doc);
 Future<void> writeString(String path, String content);
-```
-
-#### CalibreMetadataGenerator (OPTIONAL)
-**Purpose**: Generate metadata.opf for Calibre
-**Input**: `BookReference`
-**Responsibilities**:
-- Create OPF metadata file
-- List all HTML files
-- Define reading order
-
-**Methods**:
-```dart
-String generate(BookReference book, List<String> htmlFiles);
 ```
 
 ### 6. Orchestration
