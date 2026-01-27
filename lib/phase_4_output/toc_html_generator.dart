@@ -1,4 +1,5 @@
-import '../table_of_contents.dart';
+import 'package:ebook_html_converter/phase_1_navigation/table_of_contents.dart';
+
 import '../phase_1_navigation/book_reference.dart';
 import '../phase_2_extraction/section_file_mapper.dart';
 
@@ -54,23 +55,12 @@ class TocHtmlGenerator {
     buffer.writeln('<li class="group-title">${_escape(group.title)}');
     buffer.writeln('<ol>');
 
-    for (final section in group.sections) {
-      _generateContentSection(buffer, section, mapping);
-    }
-
-    buffer.writeln('</ol></li>');
-  }
-
-  void _generateContentSection(
-    StringBuffer buffer,
-    ContentSection section,
-    Map<ContentItem, String> mapping,
-  ) {
-    buffer.writeln('<li>${_escape(section.title)}');
-    buffer.writeln('<ol>');
-
-    for (final item in section.items) {
-      _generateContentItem(buffer, item, mapping);
+    for (final child in group.children) {
+      if (child is ContentItem) {
+        _generateContentItem(buffer, child, mapping);
+      } else if (child is GroupItem) {
+        _generateGroupItem(buffer, child, mapping);
+      }
     }
 
     buffer.writeln('</ol></li>');

@@ -50,7 +50,8 @@ class LibraryIndexParser {
     final items = <IndexItem>[];
 
     // Match AddIndex("name", "path", "type") patterns
-    final regex = RegExp(r'AddIndex\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)');
+    final regex = RegExp(
+        r'AddIndex\s*\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)');
 
     for (final match in regex.allMatches(content)) {
       final name = match.group(1)!;

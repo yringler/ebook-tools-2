@@ -16,7 +16,8 @@ class PathResolver {
   }
 
   /// Validate that the resolved path exists and return it.
-  Future<String> validateAndResolve(String basePath, String relativePath) async {
+  Future<String> validateAndResolve(
+      String basePath, String relativePath) async {
     final resolved = resolve(basePath, relativePath);
     final exists = await fileSystem.fileExists(resolved);
     if (!exists) {

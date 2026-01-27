@@ -1,7 +1,8 @@
+import 'package:ebook_html_converter/phase_1_navigation/library_index_parser.dart';
+
 import 'book_reference.dart';
 import 'index_file_reader.dart';
 import 'path_resolver.dart';
-import '../table_of_contents.dart';
 
 /// Walks through the folder→folder→book hierarchy to discover all books.
 /// Recursively follows folder links and builds a list of all books with breadcrumbs.
@@ -31,16 +32,17 @@ class HierarchyNavigator {
     for (final item in items) {
       if (item.type == IndexItemType.folder) {
         // Recursively navigate folder
-        final folderPath = pathResolver.resolve(currentDir, item.href);
-        final newBreadcrumbs = [...breadcrumbs, item.title];
+        final folderPath = pathResolver.resolve(currentDir, item.path);
+        final newBreadcrumbs = [...breadcrumbs, item.name];
 
         final folderIndex = await indexReader.readIndex(folderPath);
-        await _navigateItems(folderIndex.items, folderPath, newBreadcrumbs, books);
+        await _navigateItems(
+            folderIndex.items, folderPath, newBreadcrumbs, books);
       } else if (item.type == IndexItemType.book) {
         // Add book reference
-        final bookPath = pathResolver.resolve(currentDir, item.href);
+        final bookPath = pathResolver.resolve(currentDir, item.path);
         books.add(BookReference(
-          title: item.title,
+          title: item.name,
           filePath: bookPath,
           type: item.type,
           breadcrumbs: breadcrumbs,

@@ -1,8 +1,8 @@
+import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html_parser;
-import '../book_table_of_contents_parser.dart';
 import '../phase_1_navigation/book_reference.dart';
 import '../phase_1_navigation/file_system.dart';
-import '../phase_2_extraction/section_file_mapper.dart';
+import '../phase_2_extraction/book_table_of_contents_parser.dart';
 import '../phase_2_extraction/section_splitter.dart';
 import '../phase_3_processing/anchor_rewriter.dart';
 import '../phase_3_processing/html_cleaner.dart';
@@ -15,7 +15,6 @@ import '../phase_4_output/toc_html_generator.dart';
 /// Orchestrates all phases: extraction, processing, and output.
 class BookProcessor {
   final FileSystem fileSystem;
-  final BookTableOfContentsParser tocParser;
   final SectionSplitter splitter;
   final HtmlCleaner cleaner;
   final StyleNormalizer styleNormalizer;
@@ -26,7 +25,6 @@ class BookProcessor {
 
   BookProcessor(
     this.fileSystem,
-    this.tocParser,
     this.splitter,
     this.cleaner,
     this.styleNormalizer,
@@ -44,7 +42,8 @@ class BookProcessor {
     var document = html_parser.parse(htmlContent);
 
     // 2. Extract TOC
-    final toc = tocParser.parse(document);
+    final tocParser = BookTableOfContentsParser(document);
+    final toc = tocParser.extractTableOfContents();
 
     // 3. Split into sections
     final sections = splitter.splitIntoSections(document, toc);
@@ -71,7 +70,9 @@ class BookProcessor {
       final filename = entry.key;
       final element = entry.value;
       final filePath = '${bookFolder.path}/$filename';
-      await fileWriter.writeHtml(filePath, element);
+      // Create a minimal document wrapper for the element
+      final elementDoc = Document.html(element.outerHtml);
+      await fileWriter.writeHtml(filePath, elementDoc);
     }
   }
 }

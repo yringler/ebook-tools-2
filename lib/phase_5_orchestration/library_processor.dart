@@ -30,7 +30,8 @@ class LibraryProcessor {
         }
       }
 
-      print('Completed: $processed/${books.length} books processed successfully');
+      print(
+          'Completed: $processed/${books.length} books processed successfully');
     } catch (e) {
       print('Error discovering books: $e');
       rethrow;

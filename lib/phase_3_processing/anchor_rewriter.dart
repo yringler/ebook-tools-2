@@ -1,5 +1,5 @@
+import 'package:ebook_html_converter/phase_1_navigation/table_of_contents.dart';
 import 'package:html/dom.dart';
-import '../table_of_contents.dart';
 import '../phase_2_extraction/section_file_mapper.dart';
 
 /// Updates anchor hrefs when splitting HTML into multiple files.
@@ -31,9 +31,10 @@ class AnchorRewriter {
     return doc;
   }
 
-  String? _findFileForAnchor(Map<ContentItem, String> mapping, String anchorId) {
+  String? _findFileForAnchor(
+      Map<ContentItem, String> mapping, String anchorId) {
     for (final entry in mapping.entries) {
-      if (entry.key.anchorId == anchorId) {
+      if (entry.key.section.anchor == anchorId) {
         return entry.value;
       }
     }

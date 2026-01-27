@@ -8,7 +8,9 @@ class HtmlCleaner {
   /// Clean a document by removing unwanted elements.
   Document clean(Document doc) {
     for (final tag in _unwantedTags) {
-      doc.querySelectorAll(tag).forEach((e) => e.remove());
+      for (final e in doc.querySelectorAll(tag)) {
+        e.remove();
+      }
     }
     return doc;
   }
@@ -16,12 +18,18 @@ class HtmlCleaner {
   /// Clean an individual element by removing unwanted children.
   Element cleanElement(Element element) {
     for (final tag in _unwantedTags) {
-      element.querySelectorAll(tag).forEach((e) => e.remove());
+      for (final e in element.querySelectorAll(tag)) {
+        e.remove();
+      }
     }
 
     // Remove navigation elements
-    element.querySelectorAll('[role="navigation"]').forEach((e) => e.remove());
-    element.querySelectorAll('.nav, .navbar, .menu').forEach((e) => e.remove());
+    for (final e in element.querySelectorAll('[role="navigation"]')) {
+      e.remove();
+    }
+    for (final e in element.querySelectorAll('.nav, .navbar, .menu')) {
+      e.remove();
+    }
 
     // Strip unnecessary attributes
     _stripAttributes(element);
@@ -35,13 +43,16 @@ class HtmlCleaner {
     for (final e in element.querySelectorAll('*')) {
       final keysToRemove = <String>[];
 
-      e.attributes.forEach((key, value) {
-        if (!attributesToKeep.contains(key)) {
-          keysToRemove.add(key);
+      for (final key in e.attributes.keys) {
+        final keyStr = key.toString();
+        if (!attributesToKeep.contains(keyStr)) {
+          keysToRemove.add(keyStr);
         }
-      });
+      }
 
-      keysToRemove.forEach((key) => e.attributes.remove(key));
+      for (final key in keysToRemove) {
+        e.attributes.remove(key);
+      }
     }
   }
 }

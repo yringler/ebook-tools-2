@@ -1,5 +1,5 @@
 import 'package:html/dom.dart';
-import '../table_of_contents.dart';
+import '../phase_1_navigation/table_of_contents.dart';
 import 'content_section_extractor.dart';
 import 'section_file_mapper.dart';
 
@@ -27,27 +27,23 @@ class SectionSplitter {
     return sections;
   }
 
-  void _splitGroupItem(Document doc, GroupItem group, Map<String, Element> sections) {
-    for (final section in group.sections) {
-      _splitContentSection(doc, section, sections);
+  void _splitGroupItem(
+      Document doc, GroupItem group, Map<String, Element> sections) {
+    for (final child in group.children) {
+      if (child is ContentItem) {
+        _splitContentItem(doc, child, sections);
+      } else if (child is GroupItem) {
+        _splitGroupItem(doc, child, sections);
+      }
     }
   }
 
-  void _splitContentSection(
-    Document doc,
-    ContentSection section,
-    Map<String, Element> sections,
-  ) {
-    for (final item in section.items) {
-      _splitContentItem(doc, item, sections);
-    }
-  }
-
-  void _splitContentItem(Document doc, ContentItem item, Map<String, Element> sections) {
-    if (item.anchorId != null && item.anchorId!.isNotEmpty) {
-      final element = extractor.extractSection(doc, item.anchorId!);
+  void _splitContentItem(
+      Document doc, ContentItem item, Map<String, Element> sections) {
+    if (item.section.anchor.isNotEmpty) {
+      final element = extractor.extractSection(doc, item.section.anchor);
       if (element != null) {
-        final filename = fileMapper.getFilenameForSection(item);
+        final filename = fileMapper.getFilenameForSection(item.section);
         sections[filename] = element;
       }
     }

@@ -1,9 +1,9 @@
 import 'dart:io';
+import 'package:ebook_html_converter/phase_1_navigation/table_of_contents.dart';
+import 'package:ebook_html_converter/phase_2_extraction/book_table_of_contents_parser.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:ebook_html_converter/book_table_of_contents_parser.dart';
-import 'package:ebook_html_converter/table_of_contents.dart';
 
 void main() {
   group('BookTableOfContentsParser', () {

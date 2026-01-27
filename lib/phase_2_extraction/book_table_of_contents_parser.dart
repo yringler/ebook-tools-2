@@ -1,5 +1,5 @@
 import 'package:html/dom.dart';
-import 'table_of_contents.dart';
+import '../phase_1_navigation/table_of_contents.dart';
 
 /// Extracts and builds the complete table of contents from book HTML content
 class BookTableOfContentsParser {

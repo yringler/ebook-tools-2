@@ -1,4 +1,4 @@
-import '../table_of_contents.dart';
+import 'library_index_parser.dart';
 
 /// Reference to a discovered book with metadata and location.
 class BookReference {

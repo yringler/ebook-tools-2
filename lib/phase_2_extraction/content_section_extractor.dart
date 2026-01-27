@@ -15,7 +15,8 @@ class ContentSectionExtractor {
 
   /// Extract content between a start and end anchor.
   /// Returns the range of elements between the anchors.
-  Element? extractSectionRange(Document doc, String startAnchor, String endAnchor) {
+  Element? extractSectionRange(
+      Document doc, String startAnchor, String endAnchor) {
     final startElement = extractSection(doc, startAnchor);
     if (startElement == null) return null;
 

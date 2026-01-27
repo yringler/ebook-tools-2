@@ -12,7 +12,8 @@ class BookFolderOrganizer {
   /// Create the output folder structure for a book.
   /// Returns the created Directory for use in subsequent writes.
   /// Example: output/תורה/בראשית/בראשית/
-  Future<Directory> createBookFolder(String outputRoot, BookReference book) async {
+  Future<Directory> createBookFolder(
+      String outputRoot, BookReference book) async {
     final pathParts = [outputRoot, ...book.breadcrumbs, book.title];
     final folderPath = pathParts.join(Platform.pathSeparator);
 
