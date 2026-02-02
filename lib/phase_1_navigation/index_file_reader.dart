@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'library_index_parser.dart';
 import 'file_system.dart';
 
@@ -11,6 +12,11 @@ class IndexFileReader {
 
   /// Read an index HTML file and parse it.
   Future<Index> readIndex(String filePath) async {
-    return parser.parse(filePath);
+    if (!await fileSystem.fileExists(filePath)) {
+      throw FileSystemException('Index file not found', filePath);
+    }
+
+    final content = await fileSystem.readFile(filePath);
+    return parser.parseContent(content);
   }
 }

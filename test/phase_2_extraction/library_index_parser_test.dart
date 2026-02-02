@@ -1,7 +1,30 @@
 import 'dart:io';
 import 'package:ebook_html_converter/phase_1_navigation/library_index_parser.dart';
+import 'package:ebook_html_converter/phase_1_navigation/file_system.dart';
 import 'package:test/test.dart';
 import 'package:path/path.dart' as p;
+
+class MockFileSystem implements FileSystem {
+  final Map<String, String> files = {};
+
+  @override
+  Future<String> readFile(String path) async {
+    if (!files.containsKey(path)) {
+      throw Exception('File not found: $path');
+    }
+    return files[path]!;
+  }
+
+  @override
+  Future<bool> fileExists(String path) async {
+    return files.containsKey(path);
+  }
+
+  @override
+  String resolvePath(String base, String relative) {
+    return '$base/$relative';
+  }
+}
 
 void main() {
   group('IndexItem', () {
@@ -142,6 +165,34 @@ void main() {
       expect(
         () => parser.parse(file.path),
         throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  group('LibraryIndexParser with FileSystem injection', () {
+    late MockFileSystem fileSystem;
+    late LibraryIndexParser parser;
+
+    setUp(() {
+      fileSystem = MockFileSystem();
+      parser = LibraryIndexParser(fileSystem);
+    });
+
+    test('uses injected FileSystem for reading files', () async {
+      fileSystem.files['test.html'] = '''
+        AddIndex("Injected", "path.html", "book");
+      ''';
+
+      final index = await parser.parse('test.html');
+
+      expect(index.items, hasLength(1));
+      expect(index.items[0].name, equals('Injected'));
+    });
+
+    test('throws FileSystemException when file does not exist', () async {
+      expect(
+        () => parser.parse('nonexistent.html'),
+        throwsA(isA<FileSystemException>()),
       );
     });
   });

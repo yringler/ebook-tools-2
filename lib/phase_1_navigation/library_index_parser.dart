@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'file_system.dart';
 
 /// Types of items that can appear in an index
 enum IndexItemType {
@@ -39,14 +40,30 @@ class Index {
 
 /// Parser for library index HTML files
 class LibraryIndexParser {
+  final FileSystem? _fileSystem;
+
+  LibraryIndexParser([this._fileSystem]);
+
   /// Parses an HTML file and extracts index items from AddIndex() calls
   Future<Index> parse(String filePath) async {
-    final file = File(filePath);
-    if (!await file.exists()) {
-      throw FileSystemException('HTML file not found', filePath);
+    String content;
+    if (_fileSystem != null) {
+      if (!await _fileSystem!.fileExists(filePath)) {
+        throw FileSystemException('HTML file not found', filePath);
+      }
+      content = await _fileSystem!.readFile(filePath);
+    } else {
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw FileSystemException('HTML file not found', filePath);
+      }
+      content = await file.readAsString();
     }
+    return parseContent(content);
+  }
 
-    final content = await file.readAsString();
+  /// Parses HTML content and extracts index items from AddIndex() calls
+  Index parseContent(String content) {
     final items = <IndexItem>[];
 
     // Match AddIndex("name", "path", "type") patterns
