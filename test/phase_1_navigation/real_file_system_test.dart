@@ -90,11 +90,13 @@ void main() {
 
         final resolved = fileSystem.resolvePath(basePath, relativePath);
 
-        expect(resolved, equals(p.join(tempDir.path, 'folder', 'relative.html')));
+        expect(
+            resolved, equals(p.join(tempDir.path, 'folder', 'relative.html')));
       });
 
       test('resolves path with parent directory reference', () {
-        final basePath = p.join(tempDir.path, 'folder', 'subfolder', 'base.html');
+        final basePath =
+            p.join(tempDir.path, 'folder', 'subfolder', 'base.html');
         final relativePath = '../other.html';
 
         final resolved = fileSystem.resolvePath(basePath, relativePath);
