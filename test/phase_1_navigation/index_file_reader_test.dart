@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:ebook_html_converter/phase_1_navigation/index_file_reader.dart';
 import 'package:ebook_html_converter/phase_1_navigation/library_index_parser.dart';
 import 'package:ebook_html_converter/phase_1_navigation/file_system.dart';
+import 'package:ebook_html_converter/phase_1_navigation/real_file_system.dart';
 
 class MockFileSystem implements FileSystem {
   final Map<String, String> files = {};
@@ -108,6 +111,63 @@ void main() {
       expect(index.items, hasLength(2));
       expect(index.items[0].name, equals('Spaced'));
       expect(index.items[1].name, equals('NoSpace'));
+    });
+  });
+
+  group('IndexFileReader integration tests', () {
+    late RealFileSystem fileSystem;
+    late LibraryIndexParser parser;
+    late IndexFileReader reader;
+    late String samplesDir;
+
+    setUp(() {
+      fileSystem = RealFileSystem();
+      parser = LibraryIndexParser();
+      reader = IndexFileReader(fileSystem, parser);
+      samplesDir = p.join(Directory.current.path, 'samples');
+    });
+
+    test('reads root index and finds all top-level folders', () async {
+      final rootPath = p.join(samplesDir, 'a_root.html');
+      final index = await reader.readIndex(rootPath);
+
+      expect(index.items, isNotEmpty);
+      expect(
+          index.items.every((item) => item.type == IndexItemType.folder), isTrue);
+      expect(index.items.any((item) => item.name == 'תורה'), isTrue);
+      expect(index.items.any((item) => item.name == 'נביאים'), isTrue);
+      expect(index.items.any((item) => item.name == 'כתובים'), isTrue);
+    });
+
+    test('reads torah index and finds chumashim folders', () async {
+      final torahPath = p.join(samplesDir, 'd_root__001_tora.html');
+      final index = await reader.readIndex(torahPath);
+
+      expect(index.items, hasLength(5));
+      expect(index.items[0].name, equals('בראשית'));
+      expect(index.items[1].name, equals('שמות'));
+      expect(index.items[2].name, equals('ויקרא'));
+      expect(index.items[3].name, equals('במדבר'));
+      expect(index.items[4].name, equals('דברים'));
+      expect(
+          index.items.every((item) => item.type == IndexItemType.folder), isTrue);
+    });
+
+    test('reads bereshit index and finds books', () async {
+      final bereshitPath =
+          p.join(samplesDir, 'd_root__001_tora__01_bereshit.html');
+      final index = await reader.readIndex(bereshitPath);
+
+      expect(index.items, isNotEmpty);
+      // First item should be the main Bereshit book
+      expect(index.items[0].name, equals('בראשית'));
+      expect(index.items[0].type, equals(IndexItemType.book));
+      expect(index.items[0].path, equals('f_00760.html'));
+
+      // Should have splited_book types as well
+      final splitedBooks =
+          index.items.where((item) => item.type == IndexItemType.splitedBook);
+      expect(splitedBooks, isNotEmpty);
     });
   });
 }

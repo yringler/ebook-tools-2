@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 import 'package:ebook_html_converter/phase_1_navigation/hierarchy_navigator.dart';
 import 'package:ebook_html_converter/phase_1_navigation/index_file_reader.dart';
 import 'package:ebook_html_converter/phase_1_navigation/library_index_parser.dart';
 import 'package:ebook_html_converter/phase_1_navigation/path_resolver.dart';
 import 'package:ebook_html_converter/phase_1_navigation/file_system.dart';
+import 'package:ebook_html_converter/phase_1_navigation/real_file_system.dart';
 
 class MockFileSystem implements FileSystem {
   final Map<String, String> files = {};
@@ -257,6 +260,46 @@ void main() {
         () => navigator.discoverBooks('/library/index.html'),
         throwsA(isA<Exception>()),
       );
+    });
+  });
+
+  group('HierarchyNavigator integration tests', () {
+    late RealFileSystem fileSystem;
+    late LibraryIndexParser parser;
+    late IndexFileReader indexReader;
+    late PathResolver pathResolver;
+    late HierarchyNavigator navigator;
+    late String samplesDir;
+
+    setUp(() {
+      fileSystem = RealFileSystem();
+      parser = LibraryIndexParser();
+      indexReader = IndexFileReader(fileSystem, parser);
+      pathResolver = PathResolver(fileSystem);
+      navigator = HierarchyNavigator(indexReader, pathResolver);
+      samplesDir = p.join(Directory.current.path, 'samples');
+    });
+
+    test('discovers books from bereshit index', () async {
+      final bereshitPath =
+          p.join(samplesDir, 'd_root__001_tora__01_bereshit.html');
+      final books = await navigator.discoverBooks(bereshitPath);
+
+      // Should find all books in the bereshit index (only type "book", not splited_book)
+      expect(books, isNotEmpty);
+      expect(books.any((b) => b.title == 'בראשית'), isTrue);
+      expect(books.any((b) => b.title == 'בראשית - ללא ניקוד'), isTrue);
+      expect(books.any((b) => b.title == 'בראשית - רש\'\'י'), isTrue);
+      // All discovered books should have empty breadcrumbs (flat index)
+      expect(books.every((b) => b.breadcrumbs.isEmpty), isTrue);
+    });
+
+    test('path resolver correctly resolves relative paths', () {
+      final basePath = p.join(samplesDir, 'a_root.html');
+      final resolved = fileSystem.resolvePath(basePath, 'd_root__001_tora.html');
+
+      expect(resolved, contains('samples'));
+      expect(resolved, contains('d_root__001_tora.html'));
     });
   });
 }
