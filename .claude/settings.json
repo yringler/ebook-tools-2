@@ -12,6 +12,6 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "dart"
+    "Dart"
   ]
 }
