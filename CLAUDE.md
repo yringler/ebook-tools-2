@@ -43,8 +43,17 @@ Index
 
 ## Testing Notes
 
-- Tests use mock/stub implementations of `FileSystem`
-- Each phase can be tested independently
+- Tests use mock/stub implementations of `FileSystem`, and any other constructor dependencies
+- To find a test case for a mock, you can check samples in samples folder to see what the html actually looks like
+- In addition to detailed unit tests with mocks, there should also be some basic unit tests using real files in the samples folder
+
+### HTML samples folder
+- samples/a_root.html : the root index
+- samples/d_root__001_tora - index of torah
+- samples/d_root__001_tora__01_bereshit.html - index of bereshit
+- samples/f_00760.html - The whole book of bereishis
+- samples/f_01683.html - a split book
+- samples/f_01683_part_1.html - a part of a split book
 
 ## Build Commands
 
